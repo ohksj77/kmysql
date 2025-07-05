@@ -1,6 +1,6 @@
 # KMySQL 🚀
 
-**Kotlin으로 구현한 고성능 관계형 데이터베이스 시스템**
+**Kotlin으로 구현한 MySQL 프로젝트**
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-blue.svg)](https://kotlinlang.org/)
 [![Java](https://img.shields.io/badge/Java-17+-green.svg)](https://openjdk.org/)
