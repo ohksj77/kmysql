@@ -15,8 +15,30 @@ class TableScan(
     private var currentSlot: Int = 0
 
     init {
-        fileName = "$tableName.tbl"
-        if (transaction.size(fileName) == 0) {
+        val isSystemTable = tableName in listOf("tablecatalog", "fieldcatalog", "indexcatalog", "viewcatalog")
+        fileName = if (isSystemTable) {
+            tableName
+        } else if (tableName.endsWith(".tbl")) {
+            if (tableName in listOf("tablecatalog.tbl", "fieldcatalog.tbl", "indexcatalog.tbl", "viewcatalog.tbl")) {
+                tableName.substring(0, tableName.length - 4)
+            } else {
+                tableName
+            }
+        } else {
+            "$tableName.tbl"
+        }
+
+        if (fileName.endsWith(".tbl.tbl")) {
+            fileName = fileName.removeSuffix(".tbl.tbl") + ".tbl"
+        }
+
+        val fileSize = try {
+            transaction.size(fileName)
+        } catch (e: Exception) {
+            0
+        }
+
+        if (fileSize == 0) {
             moveToNewBlock()
         } else {
             moveToBlock(0)
@@ -48,7 +70,8 @@ class TableScan(
     }
 
     override fun getString(fieldName: String): String {
-        return recordPage!!.getString(currentSlot, fieldName)
+        val result = recordPage!!.getString(currentSlot, fieldName)
+        return result
     }
 
     override fun getVal(fieldName: String): Constant {

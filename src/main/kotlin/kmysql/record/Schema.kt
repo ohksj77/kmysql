@@ -7,7 +7,9 @@ class Schema {
     private val info = mutableMapOf<String, FieldInfo>()
 
     fun addField(fieldName: String, type: Int, length: Int) {
-        fields.add(fieldName)
+        if (!fields.contains(fieldName)) {
+            fields.add(fieldName)
+        }
         info[fieldName] = FieldInfo(type, length)
     }
 

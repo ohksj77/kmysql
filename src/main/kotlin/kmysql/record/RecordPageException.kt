@@ -1,3 +1,3 @@
 package kmysql.record
 
-class RecordPageException : RuntimeException()
+class RecordPageException(string: String) : RuntimeException()
