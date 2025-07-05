@@ -3,6 +3,7 @@ package kmysql.metadata
 import kmysql.record.Layout
 import kmysql.record.TableScan
 import kmysql.transaction.Transaction
+import kmysql.util.ConsoleLogger
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class StatisticsManager(
@@ -12,10 +13,6 @@ class StatisticsManager(
     private val tableStatistics = HashMap<String, StatisticsInformation>()
     private val lock = ReentrantReadWriteLock()
     private var numberCalls = 0
-
-    init {
-        refreshStatistics(transaction)
-    }
 
     fun getStatisticsInformation(tableName: String, layout: Layout, transaction: Transaction): StatisticsInformation {
         lock.readLock().lock()
@@ -43,17 +40,27 @@ class StatisticsManager(
         lock.writeLock().lock()
         try {
             numberCalls = 0
-            val tableCatalogLayout = tableManager.getLayout(TABLE_CATALOG, transaction)
-            val tableCatalog = TableScan(transaction, TABLE_CATALOG, tableCatalogLayout)
             try {
-                while (tableCatalog.next()) {
-                    val tableName = tableCatalog.getString(TABLE_NAME)
-                    val layout = tableManager.getLayout(tableName, transaction)
-                    val statisticsInformation = calcTableStatistics(tableName, layout, transaction)
-                    tableStatistics[tableName] = statisticsInformation
+                val tableCatalogLayout = tableManager.getLayout(TABLE_CATALOG, transaction)
+                val tableCatalog = TableScan(transaction, TABLE_CATALOG, tableCatalogLayout)
+                try {
+                    while (tableCatalog.next()) {
+                        try {
+                            val tableName = tableCatalog.getString(TABLE_NAME)
+                            if (tableName.isNotEmpty()) {
+                                val layout = tableManager.getLayout(tableName, transaction)
+                                val statisticsInformation = calcTableStatistics(tableName, layout, transaction)
+                                tableStatistics[tableName] = statisticsInformation
+                            }
+                        } catch (e: Exception) {
+                            ConsoleLogger.warn("Warning: Failed to process table statistics: ${e.message}")
+                        }
+                    }
+                } finally {
+                    tableCatalog.close()
                 }
-            } finally {
-                tableCatalog.close()
+            } catch (e: Exception) {
+                ConsoleLogger.warn("Warning: Could not refresh statistics: ${e.message}")
             }
         } finally {
             lock.writeLock().unlock()
@@ -80,7 +87,7 @@ class StatisticsManager(
     }
 
     companion object {
-        const val TABLE_CATALOG = "tablecatalog"
+        const val TABLE_CATALOG = "tablecatalog.tbl"
         const val TABLE_NAME = "tablename"
     }
 }

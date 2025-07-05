@@ -49,7 +49,7 @@ class IndexInfo(
             schema.addIntField("dataval")
         } else {
             val fieldLength = tableSchema.length(fieldName) ?: throw RuntimeException("field length null error")
-            schema.addStringField("datavale", fieldLength)
+            schema.addStringField("dataval", fieldLength)
         }
         return Layout(schema)
     }

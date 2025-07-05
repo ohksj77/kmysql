@@ -1,10 +1,10 @@
 package kmysql.metadata
 
 import kmysql.metadata.TableManager.Companion.MAX_NAME
-import kmysql.record.Layout
 import kmysql.record.Schema
 import kmysql.record.TableScan
 import kmysql.transaction.Transaction
+import kmysql.util.ConsoleLogger
 
 class IndexManager(
     private val isNew: Boolean,
@@ -12,20 +12,35 @@ class IndexManager(
     private val statisticsManager: StatisticsManager,
     private val transaction: Transaction,
 ) {
-    private var layout: Layout
 
     init {
         if (isNew) {
+            ConsoleLogger.info("IndexManager: indexcatalog 테이블을 생성합니다.")
             val schema = Schema()
             schema.addStringField("indexname", MAX_NAME)
             schema.addStringField("tablename", MAX_NAME)
             schema.addStringField("fieldname", MAX_NAME)
             tableManager.createTable("indexcatalog", schema, transaction)
+            ConsoleLogger.info("IndexManager: indexcatalog 테이블 생성 완료")
+        } else {
+            ConsoleLogger.info("IndexManager: 기존 indexcatalog 테이블을 사용합니다.")
+            try {
+                tableManager.getLayout("indexcatalog", transaction)
+                ConsoleLogger.info("IndexManager: indexcatalog 테이블 확인 완료")
+            } catch (e: Exception) {
+                ConsoleLogger.info("IndexManager: indexcatalog 테이블이 없어서 생성합니다.")
+                val schema = Schema()
+                schema.addStringField("indexname", MAX_NAME)
+                schema.addStringField("tablename", MAX_NAME)
+                schema.addStringField("fieldname", MAX_NAME)
+                tableManager.createTable("indexcatalog", schema, transaction)
+                ConsoleLogger.info("IndexManager: indexcatalog 테이블 생성 완료")
+            }
         }
-        layout = tableManager.getLayout("indexcatalog", transaction)
     }
 
     fun createIndex(indexName: String, tableName: String, fieldName: String, tx: Transaction) {
+        val layout = tableManager.getLayout("indexcatalog", transaction)
         val tableScan = TableScan(tx, "indexcatalog", layout)
         tableScan.insert()
         tableScan.setString("indexname", indexName)
@@ -36,6 +51,7 @@ class IndexManager(
 
     fun getIndexInfo(tableName: String, tx: Transaction): Map<String, IndexInfo> {
         val result = mutableMapOf<String, IndexInfo>()
+        val layout = tableManager.getLayout("indexcatalog", transaction)
         val tableScan = TableScan(tx, "indexcatalog", layout)
         while (tableScan.next()) {
             if (tableScan.getString("tablename") == tableName) {

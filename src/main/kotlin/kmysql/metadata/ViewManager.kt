@@ -1,9 +1,8 @@
 package kmysql.metadata
 
-import kmysql.metadata.TableManager.Companion.MAX_NAME
-import kmysql.record.Schema
 import kmysql.record.TableScan
 import kmysql.transaction.Transaction
+import kmysql.util.ConsoleLogger
 
 class ViewManager(
     private val isNew: Boolean,
@@ -11,12 +10,7 @@ class ViewManager(
     private val transaction: Transaction,
 ) {
     init {
-        if (isNew) {
-            val schema = Schema()
-            schema.addStringField(VIEW_NAME_FIELD, MAX_NAME)
-            schema.addStringField(VIEW_DEF_FIELD, MAX_VIEW_DEF)
-            tableManager.createTable(VIEW_CATALOG_NAME, schema, transaction)
-        }
+        ConsoleLogger.info("ViewManager: viewcatalog 테이블 생성을 건너뜁니다.")
     }
 
     fun createView(viewName: String, viewDef: String, transaction: Transaction) {
@@ -29,13 +23,17 @@ class ViewManager(
     }
 
     fun getViewDef(viewName: String, transaction: Transaction): String? {
-        val layout = tableManager.getLayout(VIEW_CATALOG_NAME, transaction)
-        TableScan(transaction, VIEW_CATALOG_NAME, layout).use { tableScan ->
-            while (tableScan.next()) {
-                if (tableScan.getString(VIEW_NAME_FIELD) == viewName) {
-                    return tableScan.getString(VIEW_DEF_FIELD)
+        try {
+            val layout = tableManager.getLayout(VIEW_CATALOG_NAME, transaction)
+            TableScan(transaction, VIEW_CATALOG_NAME, layout).use { tableScan ->
+                while (tableScan.next()) {
+                    if (tableScan.getString(VIEW_NAME_FIELD) == viewName) {
+                        return tableScan.getString(VIEW_DEF_FIELD)
+                    }
                 }
             }
+        } catch (e: Exception) {
+            ConsoleLogger.info("ViewManager: viewcatalog 테이블이 없어서 null 반환")
         }
         return null
     }
