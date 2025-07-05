@@ -79,25 +79,9 @@ git clone https://github.com/yourusername/kmysql.git
 cd kmysql
 ```
 
-### 2. 프로젝트 빌드
+### 2. 서버 빌드 & 실행
 ```bash
-./gradlew build
-```
-
-### 3. 서버 실행 (대화형 모드)
-```bash
-./gradlew run
-```
-또는
-```bash
-java -jar build/libs/kmysql-1.0-SNAPSHOT.jar
-```
-실행 후 데이터베이스 경로를 입력하세요:
-
-### 4. 테스트 실행
-
-```bash
-./gradlew test
+sh run.sh
 ```
 
 ## 💻 사용법
@@ -105,7 +89,7 @@ java -jar build/libs/kmysql-1.0-SNAPSHOT.jar
 ### 대화형 SQL 클라이언트
 
 ```bash
-Connect> /tmp/kmysql_db
+Connect> kmysql_db
 ```
 
 #### 기본 SQL 명령어 예제
@@ -220,12 +204,6 @@ fun main() {
 
 # 종합 트랜잭션 테스트
 ./gradlew test --tests "kmysql.ComprehensiveTransactionTest"
-```
-
-### 테스트 커버리지 확인
-
-```bash
-./gradlew test jacocoTestReport
 ```
 
 ## 📁 프로젝트 구조
