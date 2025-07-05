@@ -9,6 +9,7 @@
 KMySQL은 MySQL을 모티브로 만들어진 Kotlin 기반 DBMS입니다. 트랜잭션 관리, 동시성 제어, 복구 시스템 등 실제 데이터베이스의 핵심 기능들을 구현했습니다.
 
 ## 실행 예시
+![](https://github.com/user-attachments/assets/70719c82-5073-4ef8-a3ae-11540c0e73b5)
 
 
 ## ✨ 주요 기능
