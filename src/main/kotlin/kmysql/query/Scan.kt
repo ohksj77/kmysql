@@ -1,6 +1,8 @@
 package kmysql.query
 
-interface Scan {
+import java.io.Closeable
+
+interface Scan : Closeable {
 
     fun beforeFirst()
 
@@ -13,6 +15,4 @@ interface Scan {
     fun getVal(fieldName: String): Constant
 
     fun hasField(fieldName: String): Boolean
-
-    fun close()
 }
