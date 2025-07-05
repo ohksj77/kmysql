@@ -5,23 +5,23 @@ import kmysql.file.Page
 import kmysql.transaction.Transaction
 
 class CommitRecord(private val page: Page) : LogRecord {
-    val transactionNumber: Int = page.getInt(Integer.BYTES)
+    val transactionId: Long = page.getLong(java.lang.Long.BYTES)
 
     override fun op(): Int = Operator.COMMIT.id
 
-    override fun transactionNumber(): Int = transactionNumber
+    override fun transactionId(): Long = transactionId
 
     override fun undo(transaction: Transaction) { /* no-op */
     }
 
-    override fun toString(): String = "<COMMIT $transactionNumber>"
+    override fun toString(): String = "<COMMIT $transactionId>"
 
     companion object {
-        fun writeToLog(lm: LogManager, transactionNumber: Int): Int {
-            val record = ByteArray(2 * Integer.BYTES)
+        fun writeToLog(lm: LogManager, transactionId: Long): Int {
+            val record = ByteArray(java.lang.Long.BYTES * 2)
             val page = Page(record)
             page.setInt(0, Operator.COMMIT.id)
-            page.setInt(Integer.BYTES, transactionNumber)
+            page.setLong(java.lang.Long.BYTES, transactionId)
             return lm.append(record)
         }
     }

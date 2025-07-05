@@ -2,64 +2,86 @@ package kmysql.transaction.concurrency
 
 import kmysql.file.BlockId
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.Condition
-import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class LockTable {
-    private val maxWaitTime = 10_000L
-    private val locks = ConcurrentHashMap<BlockId, LockInfo>()
+    private val locks = ConcurrentHashMap<BlockId, ReentrantReadWriteLock>()
+    private val deadlockDetector = DeadlockDetector.getInstance()
+    private val lockTimeout = 50L
 
-    fun sLock(blockId: BlockId) = withLock(blockId) { info ->
-        waitUntil(info, { info.lockCount < 0 }) { throw LockAbortException() }
-        info.lockCount += 1
+    companion object {
+        @Volatile
+        private var instance: LockTable? = null
+
+        fun getInstance(): LockTable {
+            return instance ?: synchronized(this) {
+                instance ?: LockTable().also { instance = it }
+            }
+        }
     }
 
-    fun xLock(blockId: BlockId) = withLock(blockId) { info ->
-        waitUntil(info, { info.lockCount > 0 }) { throw LockAbortException() }
-        info.lockCount = -1
-    }
+    fun sLock(blockId: BlockId, transactionId: Long) {
+        val lock = locks.computeIfAbsent(blockId) { ReentrantReadWriteLock() }
 
-    fun unlock(blockId: BlockId) {
-        val info = locks[blockId] ?: return
-        info.lock.lock()
+        deadlockDetector.addLockRequest(transactionId, blockId, false)
+
         try {
-            when {
-                info.lockCount > 1 -> info.lockCount -= 1
-                else -> {
-                    locks.remove(blockId)
-                    info.condition.signalAll()
+            if (!lock.readLock().tryLock(lockTimeout, TimeUnit.SECONDS)) {
+                deadlockDetector.removeLockRequest(transactionId, blockId)
+                throw RuntimeException("sLock timeout (possible deadlock): $blockId")
+            }
+        } catch (e: DeadlockException) {
+            deadlockDetector.removeLockRequest(transactionId, blockId)
+            throw e
+        }
+    }
+
+    fun xLock(blockId: BlockId, transactionId: Long) {
+        val lock = locks.computeIfAbsent(blockId) { ReentrantReadWriteLock() }
+
+        deadlockDetector.addLockRequest(transactionId, blockId, true)
+
+        try {
+            val readLockCount = lock.readHoldCount
+            if (readLockCount > 0) {
+                repeat(readLockCount) {
+                    lock.readLock().unlock()
                 }
             }
-        } finally {
-            info.lock.unlock()
+
+            if (!lock.writeLock().tryLock(lockTimeout, TimeUnit.SECONDS)) {
+                deadlockDetector.removeLockRequest(transactionId, blockId)
+                throw RuntimeException("xLock timeout (possible deadlock): $blockId")
+            }
+        } catch (e: DeadlockException) {
+            deadlockDetector.removeLockRequest(transactionId, blockId)
+            throw e
         }
     }
 
-    private fun withLock(blockId: BlockId, action: (LockInfo) -> Unit) {
-        val info = locks.computeIfAbsent(blockId) { LockInfo() }
-        info.lock.lock()
+    fun sUnlock(blockId: BlockId, transactionId: Long) {
+        val lock = locks[blockId] ?: return
         try {
-            action(info)
-        } finally {
-            info.lock.unlock()
+            lock.readLock().unlock()
+            deadlockDetector.removeLockRequest(transactionId, blockId)
+        } catch (ignored: IllegalMonitorStateException) {
         }
     }
 
-    private fun waitUntil(info: LockInfo, conditionCheck: () -> Boolean, onTimeout: () -> Unit) {
-        val start = System.currentTimeMillis()
-        while (conditionCheck() && !waitedTooLong(start)) {
-            val remaining = maxWaitTime - (System.currentTimeMillis() - start)
-            if (remaining <= 0) break
-            info.condition.awaitNanos(remaining * 1_000_000)
+    fun xUnlock(blockId: BlockId, transactionId: Long) {
+        val lock = locks[blockId] ?: return
+        try {
+            lock.writeLock().unlock()
+            deadlockDetector.removeLockRequest(transactionId, blockId)
+        } catch (ignored: IllegalMonitorStateException) {
         }
-        if (conditionCheck()) onTimeout()
     }
 
-    private fun waitedTooLong(start: Long) = System.currentTimeMillis() - start > maxWaitTime
+    fun clearTransaction(transactionId: Long) {
+        deadlockDetector.clearTransaction(transactionId)
+    }
 
-    private class LockInfo {
-        val lock = ReentrantLock()
-        val condition: Condition = lock.newCondition()
-        var lockCount: Int = 0
+    fun setLockTimeout(timeoutSeconds: Long) {
     }
 }

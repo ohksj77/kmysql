@@ -12,10 +12,11 @@ class BufferList(private val bufferManager: BufferManager) {
         return buffers[blockId]
     }
 
-    fun pin(blockId: BlockId) {
+    fun pin(blockId: BlockId): Buffer {
         val buffer = bufferManager.pin(blockId)
         buffers[blockId] = buffer
         pins.add(blockId)
+        return buffer
     }
 
     fun unpin(blockId: BlockId) {
@@ -34,5 +35,9 @@ class BufferList(private val bufferManager: BufferManager) {
         }
         buffers.clear()
         pins.clear()
+    }
+
+    fun getAllBlockIds(): List<BlockId> {
+        return buffers.keys.toList()
     }
 }

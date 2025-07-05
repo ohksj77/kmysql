@@ -7,7 +7,7 @@ import kmysql.transaction.Transaction
 object CheckpointRecord : LogRecord {
     override fun op(): Int = Operator.CHECKPOINT.id
 
-    override fun transactionNumber(): Int = -1
+    override fun transactionId(): Long = -1
 
     override fun undo(transaction: Transaction) {
     }

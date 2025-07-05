@@ -5,33 +5,33 @@ import kmysql.file.Page
 import kmysql.transaction.Transaction
 
 class StartRecord(val page: Page) : LogRecord {
-    private var transactionNumber: Int
+    private var transactionId: Long
 
     init {
-        val transactionPosition = Integer.BYTES
-        transactionNumber = page.getInt(transactionPosition)
+        val transactionPosition = java.lang.Long.BYTES
+        transactionId = page.getLong(transactionPosition)
     }
 
     override fun op(): Int {
         return Operator.START.id
     }
 
-    override fun transactionNumber(): Int {
-        return transactionNumber
+    override fun transactionId(): Long {
+        return transactionId
     }
 
     override fun undo(transaction: Transaction) {}
 
     override fun toString(): String {
-        return "<START $transactionNumber>"
+        return "<START $transactionId>"
     }
 
     companion object {
-        fun writeToLog(logManager: LogManager, transactionNumber: Int): Int {
-            val record = ByteArray(2 * Integer.BYTES)
+        fun writeToLog(logManager: LogManager, transactionId: Long): Int {
+            val record = ByteArray(java.lang.Long.BYTES * 2)
             val page = Page(record)
             page.setInt(0, Operator.START.id)
-            page.setInt(Integer.BYTES, transactionNumber)
+            page.setLong(java.lang.Long.BYTES, transactionId)
             return logManager.append(record)
         }
     }

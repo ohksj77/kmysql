@@ -6,15 +6,15 @@ import kmysql.file.Page
 import kmysql.transaction.Transaction
 
 class SetStringRecord(page: Page) : LogRecord {
-    val transactionNumber: Int
+    val transactionId: Long
     val offset: Int
     val value: String
     val blockId: BlockId
 
     init {
-        val transactionPos = Integer.BYTES
-        transactionNumber = page.getInt(transactionPos)
-        val filePos = transactionPos + Integer.BYTES
+        val transactionPos = java.lang.Long.BYTES
+        transactionId = page.getLong(transactionPos)
+        val filePos = transactionPos + java.lang.Long.BYTES
         val filename = page.getString(filePos)
         val blockPos = filePos + Page.maxLength(filename.length)
         val blockNumber = page.getInt(blockPos)
@@ -27,26 +27,33 @@ class SetStringRecord(page: Page) : LogRecord {
 
     override fun op(): Int = Operator.SET_STRING.id
 
-    override fun transactionNumber(): Int = transactionNumber
+    override fun transactionId(): Long = transactionId
 
-    override fun toString(): String = "<SETSTRING $transactionNumber $blockId $offset $value>"
+    override fun toString(): String = "<SETSTRING $transactionId $blockId $offset $value>"
 
     override fun undo(transaction: Transaction) {
         transaction.pin(blockId)
-        transaction.setString(blockId, offset, value, false)
+        val buffer = transaction.getBuffer(blockId)
+        if (buffer != null) {
+            val page = buffer.contents()
+            page.setString(offset, value)
+            buffer.setModified(transaction.getTransactionId(), -1)
+            buffer.forceFlush()
+            transaction.getVersionManager().rollbackTo(blockId, transaction.getTransactionId())
+        }
         transaction.unpin(blockId)
     }
 
     companion object {
         fun writeToLog(
             logManager: LogManager,
-            transactionNumber: Int,
+            transactionId: Long,
             blockId: BlockId,
             offset: Int,
             value: String
         ): Int {
-            val transactionPos = Integer.BYTES
-            val filePos = transactionPos + Integer.BYTES
+            val transactionPos = java.lang.Long.BYTES
+            val filePos = transactionPos + java.lang.Long.BYTES
             val blockPos = filePos + Page.maxLength(blockId.filename.length)
             val offsetPos = blockPos + Integer.BYTES
             val valuePos = offsetPos + Integer.BYTES
@@ -54,7 +61,7 @@ class SetStringRecord(page: Page) : LogRecord {
             val record = ByteArray(recordLength)
             val page = Page(record)
             page.setInt(0, Operator.SET_STRING.id)
-            page.setInt(transactionPos, transactionNumber)
+            page.setLong(transactionPos, transactionId)
             page.setString(filePos, blockId.filename)
             page.setInt(blockPos, blockId.number)
             page.setInt(offsetPos, offset)
