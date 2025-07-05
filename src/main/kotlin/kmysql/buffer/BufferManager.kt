@@ -17,9 +17,9 @@ class BufferManager(
 
     fun available(): Int = withLock { numAvailable }
 
-    fun flushAll(transactionNum: Int) = withLock {
+    fun flushAll(transactionId: Long) = withLock {
         bufferPool.forEach { buffer ->
-            if (buffer.modifyingTransaction() == transactionNum) {
+            if (buffer.modifyingTransaction() == transactionId) {
                 buffer.flush()
             }
         }
@@ -63,8 +63,9 @@ class BufferManager(
         return buffer
     }
 
-    private fun findExistingBuffer(blockId: BlockId): Buffer? =
-        bufferPool.firstOrNull { it.blockId() == blockId }
+    private fun findExistingBuffer(blockId: BlockId): Buffer? {
+        return bufferPool.firstOrNull { it.blockId() == blockId }
+    }
 
     private fun chooseUnpinnedBuffer(): Buffer? =
         bufferPool.firstOrNull { !it.isPinned() }

@@ -12,37 +12,43 @@ class Buffer(
     private var contents: Page = Page(fm.blockSize)
     private var blockId: BlockId? = null
     private var pins = 0
-    private var transactionNum: Int? = null
+    private var transactionId: Long? = null
     private var lsn: Int? = null
 
     fun contents(): Page = contents
 
     fun blockId(): BlockId? = blockId
 
-    fun setModified(newTransactionNum: Int, newLsn: Int) {
-        transactionNum = newTransactionNum
+    fun setModified(newtransactionId: Long, newLsn: Int) {
+        transactionId = newtransactionId
         lsn = newLsn
     }
 
     fun isPinned(): Boolean = pins > 0
 
-    fun modifyingTransaction(): Int? = transactionNum
+    fun modifyingTransaction(): Long? = transactionId
 
     fun assignToBlock(b: BlockId) {
         flush()
         blockId = b
         fm.read(b, contents)
         pins = 0
-        transactionNum = null
+        transactionId = null
         lsn = null
     }
 
     fun flush() {
-        if (transactionNum != null && blockId != null && lsn != null) {
+        if (transactionId != null && blockId != null && lsn != null) {
             lm.flush(lsn!!)
             fm.write(blockId!!, contents)
-            transactionNum = null
+            transactionId = null
             lsn = null
+        }
+    }
+
+    fun forceFlush() {
+        if (blockId != null) {
+            fm.write(blockId!!, contents)
         }
     }
 
