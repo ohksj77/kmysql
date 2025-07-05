@@ -9,7 +9,7 @@ object ConsoleLogger {
     private val level: Level = Level.INFO
 
     fun debug(message: String) = log(Level.DEBUG, message)
-    fun info(msg: String) = log(Level.INFO, msg)
+    fun info(msg: String) = log(Level.DEBUG, msg)
     fun warn(msg: String) = log(Level.WARN, msg)
     fun error(msg: String) = log(Level.ERROR, msg)
 
