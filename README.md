@@ -62,11 +62,9 @@ KMySQL은 MySQL을 모티브로 만들어진 Kotlin 기반 DBMS입니다. 트랜
 - **언어**: Kotlin 1.9+
 - **런타임**: Java 17+
 - **빌드 도구**: Gradle 8.0+
-- **아키텍처**: 모듈화된 컴포넌트 기반 설계
 
 ## 📋 시스템 요구사항
 
-- **운영체제**: Windows, macOS, Linux
 - **Java**: OpenJDK 17 이상
 - **메모리**: 최소 512MB RAM
 - **디스크**: 최소 100MB 여유 공간
@@ -75,7 +73,7 @@ KMySQL은 MySQL을 모티브로 만들어진 Kotlin 기반 DBMS입니다. 트랜
 
 ### 1. 프로젝트 클론
 ```bash
-git clone https://github.com/yourusername/kmysql.git
+git clone https://github.com/ohksj77/kmysql.git
 cd kmysql
 ```
 
