@@ -9,9 +9,6 @@ import kmysql.record.Schema
 import kmysql.transaction.Transaction
 import kotlin.math.ln
 
-/**
- * B Treeの操作を行うクラス
- */
 class BTreeIndex(
     private val transaction: Transaction,
     private val indexName: String,

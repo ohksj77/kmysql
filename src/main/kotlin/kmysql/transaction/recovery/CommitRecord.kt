@@ -11,7 +11,7 @@ class CommitRecord(private val page: Page) : LogRecord {
 
     override fun transactionId(): Long = transactionId
 
-    override fun undo(transaction: Transaction) { /* no-op */
+    override fun undo(transaction: Transaction) {
     }
 
     override fun toString(): String = "<COMMIT $transactionId>"
