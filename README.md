@@ -9,8 +9,8 @@
 KMySQL은 MySQL을 모티브로 만들어진 Kotlin 기반 DBMS입니다. 트랜잭션 관리, 동시성 제어, 복구 시스템 등 실제 데이터베이스의 핵심 기능들을 구현했습니다.
 
 ## 실행 예시
-![](https://github.com/user-attachments/assets/70719c82-5073-4ef8-a3ae-11540c0e73b5)
 
+![](https://github.com/user-attachments/assets/70719c82-5073-4ef8-a3ae-11540c0e73b5)
 
 ## ✨ 주요 기능
 
@@ -72,12 +72,14 @@ KMySQL은 MySQL을 모티브로 만들어진 Kotlin 기반 DBMS입니다. 트랜
 ## 🚀 빠른 시작
 
 ### 1. 프로젝트 클론
+
 ```bash
 git clone https://github.com/ohksj77/kmysql.git
 cd kmysql
 ```
 
 ### 2. 서버 빌드 & 실행
+
 ```bash
 sh run.sh
 ```
@@ -94,32 +96,45 @@ Connect> kmysql_db
 
 ```sql
 -- 테이블 생성
-CREATE TABLE student (
-    sid INT,
-    sname VARCHAR(20),
+CREATE TABLE student
+(
+    sid     INT,
+    sname   VARCHAR(20),
     majorid INT,
-    gpa INT
+    gpa     INT
 );
 
 -- 데이터 삽입
-INSERT INTO student VALUES(1, '홍길동', 10, 38);
-INSERT INTO student VALUES(2, '김철수', 10, 35);
-INSERT INTO student VALUES(3, '이영희', 20, 39);
+INSERT INTO student
+VALUES (1, '홍길동', 10, 38);
+INSERT INTO student
+VALUES (2, '김철수', 10, 35);
+INSERT INTO student
+VALUES (3, '이영희', 20, 39);
 
 -- 데이터 조회
-SELECT * FROM student;
-SELECT sname, gpa FROM student;
-SELECT sname FROM student WHERE majorid = 10;
+SELECT *
+FROM student;
+SELECT sname, gpa
+FROM student;
+SELECT sname
+FROM student
+WHERE majorid = 10;
 
 -- 데이터 수정
-UPDATE student SET gpa = 40 WHERE sid = 1;
+UPDATE student
+SET gpa = 40
+WHERE sid = 1;
 
 -- 데이터 삭제
-DELETE FROM student WHERE sid = 3;
+DELETE
+FROM student
+WHERE sid = 3;
 
 -- 트랜잭션 명령어
-commit;  -- 트랜잭션 커밋
-rollback;  -- 트랜잭션 롤백
+commit; -- 트랜잭션 커밋
+rollback;
+-- 트랜잭션 롤백
 
 -- 종료
 exit;
@@ -364,7 +379,3 @@ tail -f kmysql.log
 # 오류 로그 필터링
 grep "ERROR" kmysql.log
 ```
-
----
-
-**KMySQL** - Kotlin으로 만든 강력한 데이터베이스 시스템 🚀
